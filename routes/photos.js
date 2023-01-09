@@ -1,36 +1,42 @@
 var express = require("express");
 var router = express.Router();
 require("../models/connection");
-
-const cloudinary = require('cloudinary').v2;
-const uniqid = require('uniqid');
-const fs = require('fs');
 const User = require("../models/users");
+const cloudinary = require("cloudinary").v2;
+const uniqid = require("uniqid");
+const fs = require("fs");
 
-const IMAGE_PATH = "https://res.cloudinary.com/dpapzrkqw/image/upload/v1671611852/";
+cloudinary.config({
+  cloud_name: "dkqrvbjsd",
+  api_key: "689581139722824",
+  api_secret: "e6Q3nu_BhazOwsWqiW-72lwveEQ",
+});
+router.post("/upload", async (req, res) => {
+  const photoPath = `./tmp/${uniqid()}.jpg`;
 
-
-router.post('/upload/:token', async (req, res) => {
-  const generatedName = `${req.params.token}.jpg`;
-  const photoPath = `./tmp/${generatedName}`;
-
-  /*Copie du fichier dans un dossier temporaire via la méthode mv()*/
-  const resultMove = await req.files.photoFromFront.mv(photoPath);
-  
-  if (!resultMove) {
-    /*Upload de la photo sur cloudinary*/
-    const resultCloudinary = await cloudinary.uploader.upload(photoPath, {
-      public_id: req.params.token,
-      folder: 'toutouCare',
-      unique_filename: false,
-      overwrite: true
-    })  
-  } else {
+  try {
+    const resultMove = await req.files.photoFromFront.mv(photoPath);
+    if (!resultMove) {
+      const resultCloudinary = await cloudinary.uploader.upload(photoPath);
+      res.json({ result: true, url: resultCloudinary.secure_url });
+    } else {
       res.json({ result: false, error: resultMove });
-    } 
-  /*On supprime le fichier temporaire après l'upload via module fs*/
-  fs.unlinkSync(photoPath);
+    }
+  } catch (error) {
+    res.json({ result: false, error });
+  } finally {
+    fs.unlinkSync(photoPath);
+  }
 });
 
+router.put("/update", async (req, res) => {
+  const { id, image } = req.body;
+  const result = await User.findByIdAndUpdate(
+    id,
+    { image: image },
+    { new: true }
+  );
+  res.json({ result: true, user: result });
+});
 
 module.exports = router;

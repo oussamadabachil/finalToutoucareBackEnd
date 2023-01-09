@@ -1,13 +1,15 @@
 
 var express = require("express");
 var path = require("path");
+var fileupload = require("express-fileupload");
+
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", true);
 
 require("./models/connection");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-
+var fileupload = require("express-fileupload");
 var indexRouter = require("./routes/index");
 var bookingRouter = require("./routes/bookings")
 var usersRouter = require("./routes/users");
@@ -23,6 +25,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(fileupload());
+
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
